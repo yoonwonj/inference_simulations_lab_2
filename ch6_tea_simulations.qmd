@@ -1,0 +1,172 @@
+---
+title: "Inference_simulations"
+format: html
+editor: visual
+---
+
+## Tips before getting started
+This is a document made to accompany some simulations from the Inference lecture in Psych 201a. The goal of this document is to continue learning in R/tidyverse but also to gain hands on experience simulating and manipulating data.
+
+# Setup
+## Import the functions & data that we need
+```{r} 
+library(tidyverse)
+library(ggplot2) # plotting
+library(ggthemes) # optional, but nice?
+```
+
+## Define the simulation function 
+This makes "tea data" where there are a certain number of people in each condition (default = 48, i.e., n_total, with n_total/2 in each half)
+
+The averages of the two conditions are separated by a known effect ("delta") with some variance
+
+```{r}
+make_tea_data <- function(n_total = 48, sigma = 1.25, delta = 1) {
+  n_half <- n_total / 2
+  tibble(condition = c(rep("milk first", n_half), rep("tea first", n_half)),
+         rating = c(round(rnorm(n_half, mean = 3.5 + delta, sd = sigma)), 
+                    round(rnorm(n_half, mean = 3.5, sd = sigma)))) |>
+    mutate(rating = if_else(rating > 7, 7, rating), # truncate if greater than max/min
+           rating = if_else(rating < 1, 1, rating))
+}
+```
+
+
+## Make data frames where we have small or larger samples
+```{r}
+tea_data <- make_tea_data(n_total = 18)
+```
+
+```{r}
+tea_data_highn <- make_tea_data(n_total = 48)
+```
+
+### Simulate 1000 experiments where you have 18 participants per experiment
+```{r}
+samps <- tibble(sim = 1:1000) |> # 
+  mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta=9))) |>  # simulate
+  unnest(cols = data) # wrangle
+```
+
+### Simulate 1000 experiments where you have 48 participants per experiment
+```{r}
+samps_highn <- tibble(sim = 1:1000) |> # 
+  mutate(data = map(sim, \(i) make_tea_data(n_total = 48, delta=9))) |>  # simulate
+  unnest(cols = data) # wrangle
+```
+
+### Summarize both of these simulations
+```{r}
+tea_summary <- samps |>
+  group_by(sim, condition) |> # group by simulation #, and condition
+  summarise(mean_rating = mean(rating)) |> # summarize across ratings
+  group_by(sim) |> # now get difference
+  summarise(delta = mean_rating[condition == "milk first"] -
+              mean_rating[condition == "tea first"])
+```
+
+```{r}
+tea_summary_highn <- samps_highn |>
+  group_by(sim, condition) |> # group by simulation #, and condition
+  summarise(mean_rating = mean(rating)) |> # summarize across ratings
+  group_by(sim) |> # now get difference
+  summarise(delta = mean_rating[condition == "milk first"] -
+              mean_rating[condition == "tea first"])
+```
+
+## Plot difference for low-n
+Let's make a plot to plot the differences in ratings across conditions
+```{r}
+ggplot(data=tea_summary, aes(x=delta)) +
+  geom_histogram(alpha=.8, bins=20) +
+  theme_few()
+```
+
+
+Or simply
+```{r}
+hist(tea_summary$delta)
+```
+## Plot difference for higher-n
+What's different about this distribution?
+```{r}
+hist(tea_summary_highn$delta)
+```
+
+# Now let's visualize what would happen under the null distribution
+```{r}
+
+null_model <- tibble(sim = 1:1000) |>
+  mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta = 0))) |>
+  unnest(cols = data)
+
+null_model_summary <- null_model |>
+  group_by(sim, condition) |>
+  summarise(mean_rating = mean(rating)) |>
+  group_by(sim) |>
+  summarise(delta = mean_rating[condition == "milk first"] -
+              mean_rating[condition == "tea first"])
+  
+```
+
+What does this data look like and why?
+```{r}
+ggplot(data=null_model_summary, aes(x=delta)) +
+  geom_histogram(alpha=.8, bins=20) +
+  theme_few()
+```
+
+
+# Confidence intervals
+Done here with high-n
+```{r}
+tea_ratings <- filter(tea_data_highn, condition == "tea first")$rating
+milk_ratings <- filter(tea_data_highn, condition == "milk first")$rating
+```
+
+
+# Calculate a CI on the EFFECT (difference between conditions)
+```{R}
+n_tea <- length(tea_ratings)
+n_milk <- length(milk_ratings)
+sd_tea <- sd(tea_ratings)
+sd_milk <- sd(milk_ratings)
+
+tea_sd_pooled <- sqrt(((n_tea - 1) * sd_tea ^ 2 + (n_milk - 1) * sd_milk ^ 2) / 
+                        (n_tea + n_milk - 2))
+
+tea_se <- tea_sd_pooled * sqrt((1 / n_tea) + (1 / n_milk))
+
+
+delta_hat <- mean(milk_ratings) - mean(tea_ratings)
+tea_ci_lower <- delta_hat - tea_se * qnorm(0.975)
+tea_ci_upper <- delta_hat + tea_se * qnorm(0.975)
+```
+
+Does this include zero?
+
+## Calculate and plot CIs for each condition separately
+```{r}
+tea_data_highn_summary <- tea_data_highn %>%
+  group_by(condition) %>%
+  summarize(cond_mean = mean(rating), cond_sd = sd(rating)) %>%
+  mutate(ci_upper = cond_mean + cond_sd*qnorm(.975), ci_lower = cond_mean - cond_sd*qnorm(.975))
+
+```
+
+```{R}
+
+ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
+  geom_jitter(width=.1, alpha=.8) +
+  theme_few() +
+  geom_pointrange(data = tea_data_highn_summary, aes(x=condition, y = cond_mean, ymin = ci_lower, ymax = ci_upper))
+
+```
+
+Extra exercises and questions:
+
+Q1. Does the confidence interval for the lower n simulations have a confidence interval that contains 0?
+
+Q2. Why do the confidence intervals overlap between conditions, but the effect is still significant?
+
+Q3. What happens if you include even more participants (N=200)? Modify the code to try to create an even "higher-n" version of the experiment
