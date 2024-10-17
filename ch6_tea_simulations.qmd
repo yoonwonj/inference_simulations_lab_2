@@ -279,7 +279,6 @@ You can also see this if you plot the distributions of the null vs empirical sim
 ggplot(data=tea_data_highn_shuffled_summary, aes(x=delta)) +
   geom_histogram(alpha=.4, bins=20, color='blue', fill='blue') +
   geom_histogram(alpha=.8, bins=20, data=tea_data_highn_summary)
-  theme_few()
 ```
 
 # Confidence intervals
