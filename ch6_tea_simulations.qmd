@@ -24,7 +24,6 @@ This makes "tea data" where there are a certain number of people in each conditi
 
 The averages of the two conditions are separated by a known effect ("delta") with some variance ("sigma"). You can change these around since we're simulating data!
 
-
 ```{r}
 make_tea_data <- function(n_total = 48, sigma = 1.25, delta = 1) {
   n_half <- n_total / 2
@@ -39,15 +38,24 @@ make_tea_data <- function(n_total = 48, sigma = 1.25, delta = 1) {
 ## Make data frames where we have small or larger samples
 
 ```{r}
-tea_data <- make_tea_data(n_total = 18)
+tea_data <- make_tea_data(n_total = 18, delta=3)
 ```
 
 ```{r}
-tea_data_highn <- make_tea_data(n_total = 48)
+tea_data_highn <- make_tea_data(n_total = 48, delta=3)
+```
+
+ok, we can do t-tests already!
+```{r}
+out <- tea_data %>%
+  t.test(rating ~ condition, data = ., paired = FALSE, var.equal = TRUE) 
+
+
+out_highn <- tea_data_highn %>%
+  t.test(rating ~ condition, data = ., paired = FALSE, var.equal = TRUE) 
 ```
 
 ### Simulate 1000 experiments where you have 18 participants per experiment with an average difference of 3 points in tea deliciousness on average
-
 ```{r}
 samps <- tibble(sim = 1:1000) |> # 
   mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta=3))) |>  # simulate
@@ -55,7 +63,6 @@ samps <- tibble(sim = 1:1000) |> #
 ```
 
 ### Simulate 1000 experiments where you have 48 participants per experiment
-
 ```{r}
 samps_highn <- tibble(sim = 1:1000) |> # 
   mutate(data = map(sim, \(i) make_tea_data(n_total = 48, delta=3))) |>  # simulate
@@ -63,7 +70,6 @@ samps_highn <- tibble(sim = 1:1000) |> #
 ```
 
 ### Summarize both of these simulations
-
 ```{r}
 tea_summary <- samps |>
   group_by(sim, condition) |> # group by simulation #, and condition
@@ -83,7 +89,6 @@ tea_summary_highn <- samps_highn |>
 ```
 
 ## Plot difference for low-n
-
 Let's make a plot to plot the differences in ratings across conditions
 
 ```{r}
@@ -93,7 +98,6 @@ ggplot(data=tea_summary, aes(x=delta)) +
 ```
 
 Or simply
-
 ```{r}
 hist(tea_summary$delta)
 ```
@@ -101,14 +105,13 @@ hist(tea_summary$delta)
 ## Plot difference for higher-n
 
 What's different about this distribution?
-
 ```{r}
 hist(tea_summary_highn$delta)
 ```
 
 (What happens if you run it again? Try varying the variance / mean of the effect?)
-
 # Now let's visualize what would happen under the null distribution
+
 Null model because DELTA (i.e., differences in conditions) is ZERO
 
 ```{r}
@@ -125,8 +128,8 @@ null_model_summary <- null_model |>
   
 ```
 
-What does this data look like and why?
 
+What does this data look like and why?
 ```{r}
 ggplot(data=null_model_summary, aes(x=delta)) +
   geom_histogram(alpha=.8, bins=20) +
@@ -165,12 +168,14 @@ tea_ci_lower <- delta_hat - tea_se * qnorm(0.975)
 tea_ci_upper <- delta_hat + tea_se * qnorm(0.975)
 ```
 
-Q1. Does the confidence interval contains 0? 
+Q1. Does the confidence interval contains 0?
+
 ```{r}
 #YOUR CODE HERE
 ```
 
 Q2. What about for the lower sample size (tea_data)? (you'll need to redo some math here)
+
 ```{r}
 #YOUR CODE HERE
 ```
@@ -200,15 +205,14 @@ Now replot this with the lower sample sizes. What changes?
 # YOUR CODE HERE
 ```
 
-
 Q2. Why do the confidence intervals overlap between conditions, but the effect is still significant?
 
 (write your answer here)
 
 Q3. Bonus: What happens if you include even more participants (N=200)? Modify the code to try to create an even "higher-n" version of the experiment
 
-
 # OK, let's try some inference on the null distribution
+
 ```{r}
 all_results=tibble() 
 
@@ -228,11 +232,13 @@ for (this_sim in 1:100) {
 ```
 
 What is the distribution of p-values when the hypothesis is null?
+
 ```{r}
 # YOUR CODE HERE
 ```
 
 OK, now see what happens when on data where we've put in an effect.
+
 ```{r}
 all_results_high_n=tibble() 
 
@@ -243,7 +249,7 @@ for (this_sim in 1:100) {
   tea_ratings <- filter(this_experiment, condition == "tea first")$rating
   milk_ratings <- filter(this_experiment, condition == "milk first")$rating
   
-  output = t.test(tea_ratings, milk_ratings)
+  output = t.test(tea_ratings, milk_ratings, paired = FALSE, var.equal = TRUE)
   
   this_exp_output = tibble(pvalue = output$p.value)
   all_results_high_n = bind_rows(all_results_high_n, this_exp_output)
@@ -251,3 +257,37 @@ for (this_sim in 1:100) {
 }
 ```
 
+
+# Null models with multiple Ns
+this takes a while to run!
+```{r}
+n_sims <- 10000
+null_model_multi_n <- expand_grid(sim = 1:n_sims, n = c(12, 24, 48, 96)) |>
+  mutate(sim_data = map(n, \(n_i) make_tea_data(n_total = n_i, delta = 0))) |>
+  unnest(cols = sim_data)
+
+null_model_summary_multi_n <- null_model_multi_n |>
+  group_by(n, sim, condition) |>
+  summarize(mean_rating = mean(rating)) |>
+  group_by(n, sim) |>
+  summarize(delta = mean_rating[condition == "milk first"] -
+              mean_rating[condition == "tea first"])
+
+null_model_quantiles_multi_n <- null_model_summary_multi_n |>
+  group_by(n) |>
+  summarize(q_025 = quantile(delta, .025),
+            q_975 = quantile(delta, .975)) 
+```
+
+```{r}
+ggplot(null_model_summary_multi_n, aes(x = delta)) + 
+  facet_wrap(vars(n), nrow = 1, labeller = label_both) +
+  geom_histogram(binwidth = .25) +
+  geom_vline(xintercept = 0, color = 'grey', linetype = "dotted") + 
+  geom_vline(data = null_model_quantiles_multi_n, 
+             aes(xintercept = q_025), color = pal$red, linetype = "dotted") + 
+  geom_vline(data = null_model_quantiles_multi_n, 
+             aes(xintercept = q_975), color = pal$red, linetype = "dotted") + 
+  xlim(-2.5, 2.5) + 
+  labs(x = "Difference in rating", y = "Frequency")
+```
