@@ -449,13 +449,12 @@ How often did we fail to reject the null hypothesis? When was our p-value greate
 Publish this to an rpubs (time to set up if you haven't!)
 
 # Excercises
-
 1.  Now go back (earlier in the code) and modify the DELTA in the simulation functions to be smaller so that there is only a small difference between groups. Is it still significant?
 
 2.  Rewrite this code with the the smaller sample size simulations. What changes?
 
-3.  Save out plots to your computer using "ggsave". You might need to query the function in R
+3.  Save out plots to your computer using "ggsave". You might need to query the function in 
 
 4.  Try some different plotting functions! https://rstudio.github.io/cheatsheets/html/data-visualization.html
 
-5.  
+
