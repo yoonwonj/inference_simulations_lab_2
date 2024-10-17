@@ -5,20 +5,25 @@ editor: visual
 ---
 
 ## Tips before getting started
+
 This is a document made to accompany some simulations from the Inference lecture in Psych 201a. The goal of this document is to continue learning in R/tidyverse but also to gain hands on experience simulating and manipulating data.
 
 # Setup
+
 ## Import the functions & data that we need
-```{r} 
+
+```{r}
 library(tidyverse)
 library(ggplot2) # plotting
 library(ggthemes) # optional, but nice?
 ```
 
-## Define the simulation function 
+## Define the simulation function
+
 This makes "tea data" where there are a certain number of people in each condition (default = 48, i.e., n_total, with n_total/2 in each half)
 
-The averages of the two conditions are separated by a known effect ("delta") with some variance
+The averages of the two conditions are separated by a known effect ("delta") with some variance ("sigma"). You can change these around since we're simulating data!
+
 
 ```{r}
 make_tea_data <- function(n_total = 48, sigma = 1.25, delta = 1) {
@@ -31,8 +36,8 @@ make_tea_data <- function(n_total = 48, sigma = 1.25, delta = 1) {
 }
 ```
 
-
 ## Make data frames where we have small or larger samples
+
 ```{r}
 tea_data <- make_tea_data(n_total = 18)
 ```
@@ -41,21 +46,24 @@ tea_data <- make_tea_data(n_total = 18)
 tea_data_highn <- make_tea_data(n_total = 48)
 ```
 
-### Simulate 1000 experiments where you have 18 participants per experiment
+### Simulate 1000 experiments where you have 18 participants per experiment with an average difference of 3 points in tea deliciousness on average
+
 ```{r}
 samps <- tibble(sim = 1:1000) |> # 
-  mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta=9))) |>  # simulate
+  mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta=3))) |>  # simulate
   unnest(cols = data) # wrangle
 ```
 
 ### Simulate 1000 experiments where you have 48 participants per experiment
+
 ```{r}
 samps_highn <- tibble(sim = 1:1000) |> # 
-  mutate(data = map(sim, \(i) make_tea_data(n_total = 48, delta=9))) |>  # simulate
+  mutate(data = map(sim, \(i) make_tea_data(n_total = 48, delta=3))) |>  # simulate
   unnest(cols = data) # wrangle
 ```
 
 ### Summarize both of these simulations
+
 ```{r}
 tea_summary <- samps |>
   group_by(sim, condition) |> # group by simulation #, and condition
@@ -75,27 +83,35 @@ tea_summary_highn <- samps_highn |>
 ```
 
 ## Plot difference for low-n
+
 Let's make a plot to plot the differences in ratings across conditions
+
 ```{r}
 ggplot(data=tea_summary, aes(x=delta)) +
   geom_histogram(alpha=.8, bins=20) +
   theme_few()
 ```
 
-
 Or simply
+
 ```{r}
 hist(tea_summary$delta)
 ```
+
 ## Plot difference for higher-n
+
 What's different about this distribution?
+
 ```{r}
 hist(tea_summary_highn$delta)
 ```
 
-# Now let's visualize what would happen under the null distribution
-```{r}
+(What happens if you run it again? Try varying the variance / mean of the effect?)
 
+# Now let's visualize what would happen under the null distribution
+Null model because DELTA (i.e., differences in conditions) is ZERO
+
+```{r}
 null_model <- tibble(sim = 1:1000) |>
   mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta = 0))) |>
   unnest(cols = data)
@@ -110,22 +126,28 @@ null_model_summary <- null_model |>
 ```
 
 What does this data look like and why?
+
 ```{r}
 ggplot(data=null_model_summary, aes(x=delta)) +
   geom_histogram(alpha=.8, bins=20) +
   theme_few()
 ```
 
-
 # Confidence intervals
-Done here with high-n
+
+Done here with high-n, first
 ```{r}
 tea_ratings <- filter(tea_data_highn, condition == "tea first")$rating
 milk_ratings <- filter(tea_data_highn, condition == "milk first")$rating
+
+# could also do in a pipe like so, but then you have to grab the column below, as in tea_ratings$ratings; above is a vector
+# tea_ratings <- tea_data_highn %>%
+#   filter(condition=="tea first") %>%
+#   select(rating)
 ```
 
-
 # Calculate a CI on the EFFECT (difference between conditions)
+
 ```{R}
 n_tea <- length(tea_ratings)
 n_milk <- length(milk_ratings)
@@ -143,9 +165,18 @@ tea_ci_lower <- delta_hat - tea_se * qnorm(0.975)
 tea_ci_upper <- delta_hat + tea_se * qnorm(0.975)
 ```
 
-Does this include zero?
+Q1. Does the confidence interval contains 0? 
+```{r}
+#YOUR CODE HERE
+```
+
+Q2. What about for the lower sample size (tea_data)? (you'll need to redo some math here)
+```{r}
+#YOUR CODE HERE
+```
 
 ## Calculate and plot CIs for each condition separately
+
 ```{r}
 tea_data_highn_summary <- tea_data_highn %>%
   group_by(condition) %>%
@@ -163,10 +194,60 @@ ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
 
 ```
 
-Extra exercises and questions:
+Now replot this with the lower sample sizes. What changes?
 
-Q1. Does the confidence interval for the lower n simulations have a confidence interval that contains 0?
+```{r}
+# YOUR CODE HERE
+```
+
 
 Q2. Why do the confidence intervals overlap between conditions, but the effect is still significant?
 
-Q3. What happens if you include even more participants (N=200)? Modify the code to try to create an even "higher-n" version of the experiment
+(write your answer here)
+
+Q3. Bonus: What happens if you include even more participants (N=200)? Modify the code to try to create an even "higher-n" version of the experiment
+
+
+# OK, let's try some inference on the null distribution
+```{r}
+all_results=tibble() 
+
+for (this_sim in 1:100) {
+  this_experiment = null_model %>%
+    filter(sim==this_sim) 
+  
+  tea_ratings <- filter(this_experiment, condition == "tea first")$rating
+  milk_ratings <- filter(this_experiment, condition == "milk first")$rating
+  
+  output = t.test(tea_ratings, milk_ratings)
+  
+  this_exp_output = tibble(pvalue = output$p.value)
+  all_results = bind_rows(all_results, this_exp_output)
+    
+}
+```
+
+What is the distribution of p-values when the hypothesis is null?
+```{r}
+# YOUR CODE HERE
+```
+
+OK, now see what happens when on data where we've put in an effect.
+```{r}
+all_results_high_n=tibble() 
+
+for (this_sim in 1:100) {
+  this_experiment = samps_highn %>%
+    filter(sim==this_sim) 
+  
+  tea_ratings <- filter(this_experiment, condition == "tea first")$rating
+  milk_ratings <- filter(this_experiment, condition == "milk first")$rating
+  
+  output = t.test(tea_ratings, milk_ratings)
+  
+  this_exp_output = tibble(pvalue = output$p.value)
+  all_results_high_n = bind_rows(all_results_high_n, this_exp_output)
+    
+}
+```
+
