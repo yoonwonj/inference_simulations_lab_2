@@ -131,9 +131,7 @@ Example before `pivot_longer`
 
 After `pivot_longer` (creates a long format with "experiment" as a label)
 
-
-│ participant_id │ experiment │ rating_value 
-
+│ participant_id │ experiment │ rating_value
 
 2.  In your ggplot, use `facet_wrap(~condition)` to make two plots, one for `milk_first` and one for `tea_first`
 3.  Use `geom_line` -- with grouping specification by `aes(group=sub_id)` -- to connect individual datapoints between participants for each condition
