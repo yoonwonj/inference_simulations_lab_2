@@ -125,15 +125,16 @@ cor.test(x=XXX, y=XXX)
 
 1.  First, use `pivot_longer` to make the dataframe longer -- you're going to need one column with all ratings, and a new column that says which experiment the ratings are from.
 
-# Example before `pivot_longer`
-# ┌──────────────┬─────────────┬────────────┐
-# │ participant_id │ rating     │ new_rating │
-# └──────────────┴─────────────┴────────────┘
+Example before `pivot_longer`
 
-# After `pivot_longer` (creates a long format with "experiment" as a label)
-# ┌──────────────┬───────────────┬────────────┐
-# │ participant_id │ experiment     │ rating_value │
-# └──────────────┴───────────────┴────────────┘
+│ participant_id │ rating │ new_rating │
+
+After `pivot_longer` (creates a long format with "experiment" as a label)
+
+
+│ participant_id │ experiment │ rating_value 
+
+
 2.  In your ggplot, use `facet_wrap(~condition)` to make two plots, one for `milk_first` and one for `tea_first`
 3.  Use `geom_line` -- with grouping specification by `aes(group=sub_id)` -- to connect individual datapoints between participants for each condition
 
