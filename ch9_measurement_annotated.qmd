@@ -44,7 +44,9 @@ make_tea_data <- function(n_total = 48,
          )))) |>
     mutate(rating = if_else(rating > 10, 10, rating),
            # truncate if greater than max/min of rating scale
-           rating = if_else(rating < 1, 1, rating))
+           rating = if_else(rating < 1, 1, rating)) %>%
+  rownames_to_column() %>% # added for this excercise
+  rename(sub_num = rowname)
 }
 ```
 

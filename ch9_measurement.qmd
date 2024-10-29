@@ -44,7 +44,9 @@ make_tea_data <- function(n_total = 48,
          )))) |>
     mutate(rating = if_else(rating > 10, 10, rating),
            # truncate if greater than max/min of rating scale
-           rating = if_else(rating < 1, 1, rating))
+           rating = if_else(rating < 1, 1, rating)) %>%
+  rownames_to_column() %>% # added for this excercise
+  rename(sub_num = rowname)
 }
 ```
 
@@ -60,19 +62,23 @@ make_tea_data <- function(n_total = 48,
 
 ## 2. Creating the second experiment
 
-Now create a new column in your tibble for the second experiment.
+Now create a new column in your tibble for the second experiment. You should now have a dataframe with some tea rating (column `rating`)
 
-Goals: practicing tidyverse and simulating data
+-   We're gonna pretend that we are doing an additional experiment and collect tea ratings again! And we can simulate this data by pretending that each participant when they rerank the tea might change their rating slightly, by some number between -3 and 3 (so some participants might become more negative, and some participants might become more positive of the tea)
 
-Here, the rating of the *simulated* second experiment data is each participants first rating with some variance (people are likely to not say exactly the same thing, but their scores are likely to be similar)
+-   Let's call this change in rating the `difference`. you can generate this `difference` by using `sample` (`sample(-3:3, 1)` ) this gives you a random number between -3 and 3. use `?sample` to get the documentation for this function to further understand what it's doing
+
+-   If your difference is the same for each participant \--\> that's not very realistic! It's unlikely that people will change their rating so uniformly, yeah? so what we want to do is use `rowwise()` to make sure that R is computing a new `difference` for each participant
+
+-   Then let's create a `new_rating` column by adding the `difference` to the old `rating` column! this is the simulated result from "experiment 2"
+
+-   Then you might want to clip the rating so that it's between 1 and 10 again (you can see the code for this from the original simulation function)
 
 TIPS:
 
 Recommend running `rowwise()` in your pipe before creating the new condition to force tidyverse to sample a new random value for each row
 
 Make your next dataframe A NEW NAME so that you're not rewriting old dataframes with new ones and getting confused
-
-Hint: you can use `to_sample = -3:3` with the `sample` function and specifies the possible values you want to sample from
 
 ```{r}
 # YOUR CODE HERE
@@ -83,33 +89,31 @@ Hint: you can use `to_sample = -3:3` with the `sample` function and specifies th
 
 Examine how the ratings are correlated across these simulations, by making a plot
 
-```{R}
-# YOUR CODE HERE
-
-```
-
-Hint: 1. Try out `geom_point` which shows you the exact values 2. Then try out `geom_jitter` which shows you the same data with some jitter around height / width
-
-Bonus: 3. Use `alpha` to make your dots transparent 4. Use `ylab` and `xlab` to make nice axes labels 5. Use geom_smooth() to look at the trend_line 6. Try making each dot different by condition
-
-Now examine -- how correlated are your responses? What is your test-retest reliability?
-
-```{R}
-```
-
-Hint: You'll need a correlation function - `cor.test` Bonus: You can also find a ggplot function to overlay the correlation on top of your plot
-
-## 4. Make another plot -- like the one from the chapter, where each line should connect an individual subject
-
-1.  First, Use pivot_longer to make the dataframe longer
-2.  Use facet_wrap(\~condition) to make two plots, one for `milk_first` and one for `tea_first`
-3.  Use geom_line -- with grouping specification by sub_id -- to connect individual datapoints for each condition
-
-Hint aes(group = sub_id))
-
 ```{r}
 # YOUR CODE HERE
-# Make new, longer dataframe 
+
+```
+
+Hint: 1. Try out `geom_point` which shows you the exact values\
+2. Then try out `geom_jitter` which shows you the same data with some jitter around height / width
+
+Bonus: 3. Use `alpha` to make your dots transparent 4. Use `ylab` and `xlab` to make nice axes labels 5. Use `geom_smooth()` to look at the trend_line 6. Try making each dot different by condition, if you want.
+
+Now examine -- how correlated are your responses? What is your test-retest reliability? Use `cor.test` to examine this -- the first value should be ratings from the first experiment, and the second argment is the ratings from the second experiment. You'll need the `$` operator to grab the column from the tibble (e.g., `all_tea_data$rating`)
+
+```{r}
+```
+
+## 5. Make another plot -- like the one from the chapter, where each line should connect an individual subject
+
+1.  First, use `pivot_longer` to make the dataframe longer -- you're going to need one column with all ratings, and a new column that says which experiment the ratings are from.
+2.  In your ggplot, use `facet_wrap(~condition)` to make two plots, one for `milk_first` and one for `tea_first`
+3.  Use `geom_line` -- with grouping specification by `aes(group=sub_id)` -- to connect individual datapoints between participants for each condition
+
+```{r}
+# YOUR DATA WRANGLING CODE HERE
+
+
 
 ```
 
