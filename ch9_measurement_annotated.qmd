@@ -67,7 +67,7 @@ Now create a new column in your tibble for the second experiment. You should now
 
 -   Let's call this change in rating the `difference`. you can generate this `difference` by using `sample` (`sample(-3:3, 1)` ) this gives you a random number between -3 and 3. use `?sample` to get the documentation for this function to further understand what it's doing
 
--   If your difference is the same for each participant \--\> that's not very realistic! It's unlikely that people will change their rating so uniformly, yeah? so what we want to do is use `rowwise()` to make sure that R is computing a new `difference` for each participant
+-   If your difference is the same for each participant --\> that's not very realistic! It's unlikely that people will change their rating so uniformly, yeah? so what we want to do is use `rowwise()` to make sure that R is computing a new `difference` for each participant
 
 -   Then let's create a `new_rating` column by adding the `difference` to the old `rating` column! this is the simulated result from "experiment 2"
 
@@ -84,10 +84,12 @@ Give your next dataframe a new name so that you're not rewriting old dataframes 
 ```{r}
 
 # STARTER CODE
+# Note: `rowwise()` is used to apply `mutate` to each row individually. 
+# This ensures each participant has a unique `difference` value, simulating realistic individual variation.
 tea_data_new_exp <- this_tea_data %>%
   rowwise() %>%
   mutate(difference = XXX) %>%
-  muttate(new_rating = rating + difference)
+  mutate(new_rating = rating + difference)
 
 
 
@@ -122,6 +124,16 @@ cor.test(x=XXX, y=XXX)
 ## 5. Make another plot -- like the one from the chapter, where each line should connect an individual subject
 
 1.  First, use `pivot_longer` to make the dataframe longer -- you're going to need one column with all ratings, and a new column that says which experiment the ratings are from.
+
+# Example before `pivot_longer`
+# ┌──────────────┬─────────────┬────────────┐
+# │ participant_id │ rating     │ new_rating │
+# └──────────────┴─────────────┴────────────┘
+
+# After `pivot_longer` (creates a long format with "experiment" as a label)
+# ┌──────────────┬───────────────┬────────────┐
+# │ participant_id │ experiment     │ rating_value │
+# └──────────────┴───────────────┴────────────┘
 2.  In your ggplot, use `facet_wrap(~condition)` to make two plots, one for `milk_first` and one for `tea_first`
 3.  Use `geom_line` -- with grouping specification by `aes(group=sub_id)` -- to connect individual datapoints between participants for each condition
 
@@ -141,11 +153,6 @@ long_dataframe <- old_dataframe
 
 How does reliability change if you increase the variance between participants (sigma) in the first experiment simulated data?
 
-
 How does reliability change if you change how much variation you allow between the first and second experiment (hint: this is the "difference" between the first and the second experiment)?
 
-
 How does reliability change if you increase sample size, holding those things constant (e.g., your overall sample size)
-
-
-
