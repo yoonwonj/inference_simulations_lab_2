@@ -1,11 +1,10 @@
 ---
-title: "Inference_simulations"
+title: "Inference Simulations"
 format: html
 editor: visual
 ---
 
 ## Tips before getting started
-
 This is a document made to accompany some simulations for the Inference workshop in Psych 201a. The goal of this document is to continue learning in R/tidyverse but also to gain hands on experience simulating and manipulating data.\
 \
 If you need to install something, you can run `install.packages('tidyverse')`, where you substitute the name of the library
@@ -17,18 +16,19 @@ To understand what a function does, type `? [function_name]` where function_name
 **You can open this in RStudio -- there are so few packages it should work despite variations in environments**
 
 # Setup
-
 ```{r}
 set.seed(123) # good practice to set a random seed, or else different runs get you different results
 ```
 
 ## Import the libraries
-
 ```{r}
+# you can run install.packages('tidyverse')
 library(tidyverse)
 library(ggplot2) # plotting
 library(ggthemes) # good for making plots pretty
 ```
+
+# Part 1: Simulating experimental data #
 
 ## Define the simulation function
 
@@ -65,10 +65,6 @@ tea_data <- make_tea_data(n_total = 18, delta = .5)
 
 Now, make a new data frame (call it tea_data_highn) with an N of 48, or something higher if you want. You need to call the custom function.
 
-```{r}
-
-```
-
 To do: OK, look at these data  How long are they, what are the column names? Look at them in your console by copy and pasting the variable names into R.
 
 Call `summary(tea_data)` and look at the outputs.
@@ -90,7 +86,7 @@ To do: Run these and look at the outputs by posting `out_low_n` in the console a
 
 R practice: Use the `$` operator and then press `tab` to see how you can get specific values (i.e., the `t` or `p` value) from the outputs.
 
-
+Try writing the outputs of the t-test in a reproducible report style paragraph.
 
 ```{r}
 out_low_n <- tea_data %>%
@@ -162,13 +158,14 @@ To do: What's different about this distribution vs the one we just plotted?
 
 ```
 
-**Bonus** What happens if you run it again, but this time try changing the variance / mean of the effect when you change the "delta" and "sigma" values in the data simulation.
+**Bonus** What happens if you run it again, but this time try changing the variance / mean of the effect when you change the `delta` and `sigma` values in the data simulation.
 
-What happens if you vary the random seed?
+What happens if you vary the random seed? How much does this change what you find?
 
-# Visualizing the null distribution
+# Part 2: Simulating the null distribution 
+(STOP HERE AND PAUSE FOR GROUP DISCUSSION)
 
-How can we actually visualize the NULL hypothesis and distribution? It's a little tricky, but we can rely on simulation to help us.
+Visualizing the null distribution. How can we actually visualize the NULL hypothesis and distribution? It's a little tricky, but we can rely on simulation to help us.
 
 ### Method 1: Simulation
 First, do the same thing as you did before - simulating 1000 experiments -- but NOW simulate no differences between conditions. Remember, it's the null model because DELTA (i.e., differences in conditions) is ZERO. Keep these dataframes - we will use them later for estimating p-values
@@ -179,20 +176,22 @@ First, do the same thing as you did before - simulating 1000 experiments -- but 
   
 ```
 
+
+Visualize what this null distribution actually looks like. 
 ```{r}
 
 ```
 
 ### Method 2: Shuffling
 
-We're can also calculate the distribution of the difference between conditions when we've shuffled the condition labels. This is the empirical null hypothesis (our H0, since we're comparing two conditions with a two-sample t-test)
+We can also calculate the distribution of the difference between conditions when we've shuffled the condition labels. This is referred to as the *empirical null hypothesis* (our H0, since we're comparing two conditions with a two-sample t-test)
 
-### Let's shuffle the labels \~within each experiment\~
+### Let's shuffle the labels within each experiment
 
 ```{r}
 tea_data_highn_shuffled <- samps_highn %>%
   group_by(sim) %>% # for each experiment
-  mutate(condition_shuffled = sample(condition)) # shuffle the condition labels, handy function
+  mutate(condition_shuffled = sample(condition)) # shuffle the condition labels, handy function here.
 ```
 
 To do: check you understanding -- what is "sim" here?
@@ -200,10 +199,14 @@ To do: check you understanding -- what is "sim" here?
 ```{r}
 tea_data_highn_shuffled_summary <- tea_data_highn_shuffled %>%
   group_by(condition_shuffled, sim) %>% 
-  summarize(mean = mean(rating),
-            sd = sd(rating)) %>%
-  ungroup() %>% 
-  summarize(delta = diff(mean)) # get the difference in ratings between conditions for each experimental draw
+  summarize(mean_rating = mean(rating),
+            sd = sd(rating)) 
+
+# overwrites this variable
+tea_data_highn_shuffled_summary <- tea_data_highn_shuffled_summary %>%
+  group_by(sim) |> 
+  summarise(delta = mean_rating[condition_shuffled == "milk first"] -
+              mean_rating[condition_shuffled == "tea first"])
 ```
 
 To do: what does this histogram look like and why?
@@ -289,7 +292,9 @@ ggplot(data=tea_data_highn_shuffled_summary, aes(x=delta)) +
   geom_histogram(alpha=.8, bins=20, data=tea_data_highn_summary)
 ```
 
-# Extra material
+# Part 3: Calculating confidence intervals 
+(STOP HERE AND PAUSE FOR GROUP DISCUSSION)
+
 Honestly, I doubt you will get this far in lab -- but if you do, there are two extra pieces of material that are I think are foundational material.
 
 ## Confidence intervals
@@ -359,7 +364,6 @@ confidence_level=.95 # you can change this
 # this formula below gives the critical t-value (as opposed to simply taken from the normal distribution)
 # qt(1 - (1 - confidence_level)/2, df = n - 1)
 
-
 tea_data_highn_summary_cis <- tea_data_highn %>%
   group_by(condition) %>%
   summarize(cond_mean = mean(rating), cond_sd = sd(rating), n=length(rating)) %>%
@@ -396,7 +400,7 @@ To do: how does this change when you use the low-n experiment?
 
 To do: Find the shortcut ggplot function so you don't have to calculate these by hand ever again :) 
 
-## Simulating p-values across multiple experiments
+# Part 4: Simulating p-values across multiple experiments
 
 To do: Comment what the lines of code are doing 
 ### When there is no actual effect
