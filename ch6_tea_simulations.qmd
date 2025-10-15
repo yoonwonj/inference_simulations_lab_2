@@ -5,6 +5,7 @@ editor: visual
 ---
 
 ## Tips before getting started
+
 This is a document made to accompany some simulations for the Inference workshop in Psych 201a. The goal of this document is to continue learning in R/tidyverse but also to gain hands on experience simulating and manipulating data.\
 \
 If you need to install something, you can run `install.packages('tidyverse')`, where you substitute the name of the library
@@ -16,11 +17,13 @@ To understand what a function does, type `? [function_name]` where function_name
 **You can open this in RStudio -- there are so few packages it should work despite variations in environments**
 
 # Setup
+
 ```{r}
 set.seed(123) # good practice to set a random seed, or else different runs get you different results
 ```
 
 ## Import the libraries
+
 ```{r}
 # you can run install.packages('tidyverse')
 library(tidyverse)
@@ -28,7 +31,7 @@ library(ggplot2) # plotting
 library(ggthemes) # good for making plots pretty
 ```
 
-# Part 1: Simulating experimental data #
+# Part 1: Simulating experimental data
 
 ## Define the simulation function
 
@@ -65,13 +68,11 @@ tea_data <- make_tea_data(n_total = 18, delta = .5)
 
 Now, make a new data frame (call it tea_data_highn) with an N of 48, or something higher if you want. You need to call the custom function.
 
-To do: OK, look at these data  How long are they, what are the column names? Look at them in your console by copy and pasting the variable names into R.
+To do: OK, look at these data How long are they, what are the column names? Look at them in your console by copy and pasting the variable names into R.
 
-Call `summary(tea_data)` and look at the outputs.
-Call `head(tea_data)` to look at the first few rows.
+Call `summary(tea_data)` and look at the outputs. Call `head(tea_data)` to look at the first few rows.
 
-
-To do: Write basic tidyverse code to calculate the mean of each condition (hint: use `group_by` and `summarize`). 
+To do: Write basic tidyverse code to calculate the mean of each condition (hint: use `group_by` and `summarize`).
 
 ```{r}
 
@@ -82,7 +83,7 @@ To do: Write basic tidyverse code to calculate the mean of each condition (hint:
 
 OK, we can do t-tests already! I've done these within a pipe (whoops, I often use the old pipe `%>%` operator which is the same as `|>` , don't mind this difference.
 
-To do: Run these and look at the outputs by posting `out_low_n` in the console and ``out_low_h` in the console.
+To do: Run these and look at the outputs by posting `out_low_n` in the console and \``out_low_h` in the console.
 
 R practice: Use the `$` operator and then press `tab` to see how you can get specific values (i.e., the `t` or `p` value) from the outputs.
 
@@ -118,7 +119,7 @@ samps_highn <-...
 
 Here, we take these simulated experiments, group by `sim` and `condition`, and summarize the average ratings per experiment.
 
-Then, for each experiment, calculate the mean difference between the milk first vs. tea first conditions. 
+Then, for each experiment, calculate the mean difference between the milk first vs. tea first conditions.
 
 To do: Comment what each line of code is doing to check your understanding, and talk to a partner about it.
 
@@ -142,7 +143,7 @@ tea_data_highn_summary <- samps_highn |>
               mean_rating[condition == "tea first"])
 ```
 
-## Plot difference for low-n
+### Plot difference for low-n
 
 Let's make a plot to plot the differences in ratings across conditions for the low-n condition. You'll need to use ggplot or `hist`
 
@@ -150,7 +151,7 @@ Let's make a plot to plot the differences in ratings across conditions for the l
 
 ```
 
-## Plot difference for higher-n
+### Plot difference for higher-n
 
 To do: What's different about this distribution vs the one we just plotted?
 
@@ -162,22 +163,23 @@ To do: What's different about this distribution vs the one we just plotted?
 
 What happens if you vary the random seed? How much does this change what you find?
 
-# Part 2: Simulating the null distribution 
+# Part 2: Simulating the null distribution
+
 (STOP HERE AND PAUSE FOR GROUP DISCUSSION)
 
 Visualizing the null distribution. How can we actually visualize the NULL hypothesis and distribution? It's a little tricky, but we can rely on simulation to help us.
 
 ### Method 1: Simulation
-First, do the same thing as you did before - simulating 1000 experiments -- but NOW simulate no differences between conditions. Remember, it's the null model because DELTA (i.e., differences in conditions) is ZERO. Keep these dataframes - we will use them later for estimating p-values
 
+First, do the same thing as you did before - simulating 1000 experiments -- but NOW simulate no differences between conditions. Remember, it's the null model because DELTA (i.e., differences in conditions) is ZERO. Keep these dataframes - we will use them later for estimating p-values
 
 ```{r}
 # Simulate the null distribution
   
 ```
 
+Visualize what this null distribution actually looks like.
 
-Visualize what this null distribution actually looks like. 
 ```{r}
 
 ```
@@ -219,8 +221,7 @@ hist(tea_data_highn_shuffled_summary$delta) #what does this histogram look like?
 
 OK, now see what happens to our raw data -- this is just from one simulation The color refers to the ORIGINAL label before we shuffled, but our condition difference is gone
 
-The color refers to the ORIGINL condition
-The x-axis refers to the SHUFFLED condition
+The color refers to the ORIGINAL condition The x-axis refers to the SHUFFLED condition
 
 ```{r}
 ggplot(data = tea_data_highn_shuffled %>% filter(sim==3),  # can change the actual simulation number here
@@ -292,17 +293,20 @@ ggplot(data=tea_data_highn_shuffled_summary, aes(x=delta)) +
   geom_histogram(alpha=.8, bins=20, data=tea_data_highn_summary)
 ```
 
-# Part 3: Calculating confidence intervals 
+# Part 3: Calculating confidence intervals
+
 (STOP HERE AND PAUSE FOR GROUP DISCUSSION)
 
 Honestly, I doubt you will get this far in lab -- but if you do, there are two extra pieces of material that are I think are foundational material.
 
 ## Confidence intervals
+
 Here, I want to show you how you WOULD calculate a CI by hand. In practice, I never do this. But it's useful to see how it could be done.
 
-
 ### Get the data
-Taking one high_n experiment for now 
+
+Taking one high_n experiment for now
+
 ```{r}
 
 tea_dataset = tea_data_highn
@@ -319,8 +323,8 @@ milk_ratings <- filter(tea_dataset, condition == "milk first")$rating
 ```
 
 ### Calculate a CI on the effect (difference between conditions)
-First we're going to calculate a CI by hand.
 
+First we're going to calculate a CI by hand.
 
 ```{r}
 n_tea <- length(tea_ratings)
@@ -351,12 +355,14 @@ tea_ci_upper_ttest <- delta_hat + tea_se * qt(0.975,df)
 ```
 
 The above code does this by hand - but it's to show you what this function is doing under the hood.
+
 ```{r}
 # Now the calculated CIs match those in the t-test outputs!
 t.test(tea_ratings, milk_ratings, var.equal=TRUE)
 ```
 
 ### Ploting CIs by hand for each condition
+
 Also plot the SEs, and visualize how they're different
 
 ```{r}
@@ -398,12 +404,12 @@ To do: What does each dot represent? What does the range represent in each graph
 
 To do: how does this change when you use the low-n experiment?
 
-To do: Find the shortcut ggplot function so you don't have to calculate these by hand ever again :) 
+To do: Find the shortcut ggplot function so you don't have to calculate these by hand ever again :)
 
 # Part 4: Simulating p-values across multiple experiments
 
-To do: Comment what the lines of code are doing 
-### When there is no actual effect
+To do: Comment what the lines of code are doing \### When there is no actual effect
+
 ```{r}
 all_results=tibble() 
 
@@ -436,6 +442,7 @@ hist(all_results$pvalue)
 ```
 
 ### Now for an experiment when there is actually an effect
+
 ```{r}
 all_results_high_n=tibble() 
 
