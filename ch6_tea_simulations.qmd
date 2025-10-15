@@ -6,7 +6,7 @@ editor: visual
 
 ## Tips before getting started
 
-This is a document made to accompany some simulations from the Inference lecture in Psych 201a. The goal of this document is to continue learning in R/tidyverse but also to gain hands on experience simulating and manipulating data.\
+This is a document made to accompany some simulations for the Inference workshop in Psych 201a. The goal of this document is to continue learning in R/tidyverse but also to gain hands on experience simulating and manipulating data.\
 \
 If you need to install something, you can run `install.packages('tidyverse')`, where you substitute the name of the library
 
@@ -25,7 +25,7 @@ set.seed(123) # good practice to set a random seed, or else different runs get y
 ```{r}
 library(tidyverse)
 library(ggplot2) # plotting
-library(ggthemes) # optional, but nice
+library(ggthemes) # good for making plots pretty
 ```
 
 ## Define the simulation function
@@ -92,9 +92,7 @@ out_high_n <- tea_data_highn %>%
 
 ### Simulate 1000 experiments
 
-To do: Run these code blocks
-
-...where you have 18 participants per experiment with an average difference of 1.5 points in tea deliciousness on average
+Now let's simulate 1000 experiments...where you have 18 participants per experiment with an average difference of 1.5 points in tea deliciousness on average
 
 Below is kind of annoying and complex tidyverse, so I'm doing it for you. I'd have to look this up how to do it.
 
@@ -112,40 +110,38 @@ samps_highn <-...
 
 ### Summarize both of these simulations
 
-To do: Take these simulated experiments, group by `sim` and `condition`, and summarize the average ratings per experiment.
+Here, we take these simulated experiments, group by `sim` and `condition`, and summarize the average ratings per experiment.
 
-Then, for each experiment, calculate the mean difference between the milk first vs. tea first conditions.
+Then, for each experiment, calculate the mean difference between the milk first vs. tea first conditions. 
+
+To do: Comment what each line of code is doing to check your understanding, and talk to a partner about it.
+
+Bonus: Figure out a way to do this that is better than I what I did (some mix of base R and tidyverse, I'm sure there's a tidyverse only way)
 
 ```{r}
 tea_data_summary <- samps |>
-  group_by(sim, condition) |> # group by simulation #, and condition
-  summarise(mean_rating = mean(rating)) |> # summarize across ratings
-  group_by(sim) |> # now get difference
+  group_by(sim, condition) |> 
+  summarise(mean_rating = mean(rating)) |> 
+  group_by(sim) |> 
   summarise(delta = mean_rating[condition == "milk first"] -
               mean_rating[condition == "tea first"])
 ```
 
 ```{r}
 tea_data_highn_summary <- samps_highn |>
-  group_by(sim, condition) |> # group by simulation #, and condition
-  summarise(mean_rating = mean(rating)) |> # summarize across ratings
-  group_by(sim) |> # now get difference
+  group_by(sim, condition) |> 
+  summarise(mean_rating = mean(rating)) |> 
+  group_by(sim) |> 
   summarise(delta = mean_rating[condition == "milk first"] -
               mean_rating[condition == "tea first"])
 ```
 
 ## Plot difference for low-n
 
-Let's make a plot to plot the differences in ratings across conditions for the low-n condition
+Let's make a plot to plot the differences in ratings across conditions for the low-n condition. You'll need to use ggplot or `hist`
 
 ```{r}
 
-```
-
-Or simply
-
-```{r}
-hist(tea_data_summary$delta)
 ```
 
 ## Plot difference for higher-n
@@ -156,41 +152,37 @@ To do: What's different about this distribution vs the one we just plotted?
 
 ```
 
-**Bonus** What happens if you run it again? Try varying the variance / mean of the effect when you change the "delta" and "sigma" values?
+**Bonus** What happens if you run it again? Try varying the variance / mean of the effect when you change the "delta" and "sigma" values in the data simulation.
 
 What happens if you vary the random seed?
 
-# Now let's visualize what would happen under the null distribution in two ways
+# Visualizing the null distribution
 
-Do the same thing as you did before - simulating 1000 experiments -- but NOW simulate no differences between conditions. Remember, it's the null model because DELTA (i.e., differences in conditions) is ZERO
+How can we actually visualize the NULL hypothesis and distribution? It's a little tricky, but we can rely on simulation to help us.
+
+### Method 1: Simulation
+First, do the same thing as you did before - simulating 1000 experiments -- but NOW simulate no differences between conditions. Remember, it's the null model because DELTA (i.e., differences in conditions) is ZERO. Keep these dataframes - we will use them later for estimating p-values
+
 
 ```{r}
-null_model 
-
-null_model_summary
+# Simulate the null distribution
   
 ```
 
-To do: Explain what does this data look like and why
-
 ```{r}
-ggplot(data=null_model_summary, aes(x=delta)) +
-  geom_histogram(alpha=.8, bins=50) +
-  theme_few()
+
 ```
 
-# Permutations
+### Method 2: Shuffling
 
-We're going to calculate the distribution of the difference between conditions when we've shuffled the condition labels
+We're can also calculate the distribution of the difference between conditions when we've shuffled the condition labels. This is the empirical null hypothesis (our H0, since we're comparing two conditions with a two-sample t-test)
 
-This is the empirical null hypothesis (our H0, since we're comparing two conditions with a two-sample t-test)
-
-### First, let's shuffle the labels \~within each experiment\~
+### Let's shuffle the labels \~within each experiment\~
 
 ```{r}
 tea_data_highn_shuffled <- samps_highn %>%
   group_by(sim) %>% # for each experiment
-  mutate(condition_shuffled = sample(condition)) # shuffle the condition labels
+  mutate(condition_shuffled = sample(condition)) # shuffle the condition labels, handy function
 ```
 
 To do: check you understanding -- what is "sim" here?
@@ -213,6 +205,9 @@ hist(tea_data_highn_shuffled_summary$delta) #what does this histogram look like?
 ### Visualizing what happens when we shuffle
 
 OK, now see what happens to our raw data -- this is just from one simulation The color refers to the ORIGINAL label before we shuffled, but our condition difference is gone
+
+The color refers to the ORIGINL condition
+The x-axis refers to the SHUFFLED condition
 
 ```{r}
 ggplot(data = tea_data_highn_shuffled %>% filter(sim==3),  # can change the actual simulation number here
@@ -238,7 +233,7 @@ The idea is now that we can get a sampling distribution of the difference in the
 
 What we get is a distribution of the differences we would expect, if there was no effect of condition.
 
-First calculate the actual difference in a simulated dataset
+First, let's calculate the actual difference in a simulated dataset where there was an effect
 
 ```{r}
 difference_actual = tea_data_highn %>%  # in ONE experiment
@@ -248,10 +243,11 @@ difference_actual = tea_data_highn %>%  # in ONE experiment
   diff()
 ```
 
-Plot the distribution of the differences
+Plot the distribution of the differences across all of our shuffled iterations
 
-```{R}
+And in red -- is the numerical value from when there was an effect (because we simulated it that way)
 
+```{r}
 ggplot(data = tea_data_highn_shuffled_summary, aes(x=delta)) +
   geom_histogram(aes(y = stat(density)),
                  color = "black",
@@ -266,14 +262,16 @@ ggplot(data = tea_data_highn_shuffled_summary, aes(x=delta)) +
 
 ```
 
-And we can then simply calculate the p-value by using some basic data wrangling (i.e. finding the proportion of differences that were as or more extreme than the one we observed).
+And we can THEN calculate the p-value by using some basic data wrangling -- it is defined as the proportion of condition differences (treatment - control) that were as or more extreme than the one we observed.
+
+If this feels tough, don't worry - we will go over these concepts more again on Friday!
 
 ```{r}
 tea_data_highn_shuffled_summary %>% 
   summarize(p_value = sum(delta <= difference_actual)/n())
 ```
 
-You can also see this if you plot the distributions of the null vs empirical simulations next to each other (blue = null)
+You can also see this if you plot the distributions of the null vs empirical simulations next to each other (blue = null, which is appropriately centered at zero. This should remind you of the cohen's d web app we looked at!)
 
 ```{r}
 ggplot(data=tea_data_highn_shuffled_summary, aes(x=delta)) +
@@ -281,12 +279,17 @@ ggplot(data=tea_data_highn_shuffled_summary, aes(x=delta)) +
   geom_histogram(alpha=.8, bins=20, data=tea_data_highn_summary)
 ```
 
-# Confidence intervals
+# Extra material
+Honestly, I doubt you will get this far in lab -- but if you do, there are two extra pieces of material that are I think are foundational material.
 
-Done here with one experiment, you can choose which is "tea_dataset"
+## Confidence intervals
+Here, I want to show you how you WOULD calculate a CI by hand. In practice, I never do this. But it's useful to see how it could be done.
 
+
+### Get the data
+Taking one high_n experiment for now 
 ```{r}
-# tea_dataset = tea_data
+
 tea_dataset = tea_data_highn
 ```
 
@@ -300,13 +303,11 @@ milk_ratings <- filter(tea_dataset, condition == "milk first")$rating
 #   select(rating)
 ```
 
-# Calculate a CI on the effect (difference between conditions)
+### Calculate a CI on the effect (difference between conditions)
+First we're going to calculate a CI by hand.
 
-Uses a pooled standard deviation We're using the normal distribution here to calculate CIs since we know the population SD follows a normal
 
-Note that this is different than the CI calculated by the two-sample t-tests, where
-
-```{R}
+```{r}
 n_tea <- length(tea_ratings)
 n_milk <- length(milk_ratings)
 sd_tea <- sd(tea_ratings)
@@ -323,9 +324,7 @@ tea_ci_lower <- delta_hat - tea_se * qnorm(0.975)
 tea_ci_upper <- delta_hat + tea_se * qnorm(0.975)
 ```
 
-# To get the 95% CI with the t-distribution
-
-You need to get the appropriate t-statistic from the distribution, which incorporates information about the degrees of freedom
+To get the 95% CI with the t-distribution, you need to get the appropriate t-statistic from the distribution, which incorporates information about the degrees of freedom
 
 The t-distribution is more appropriate when you have smaller sample sizes and is what is used in t.tests
 
@@ -336,14 +335,14 @@ tea_ci_lower_ttest <- delta_hat - tea_se * qt(0.975,df)
 tea_ci_upper_ttest <- delta_hat + tea_se * qt(0.975,df)
 ```
 
+The above code does this by hand - but it's to show you what this function is doing under the hood.
 ```{r}
 # Now the calculated CIs match those in the t-test outputs!
 t.test(tea_ratings, milk_ratings, var.equal=TRUE)
 ```
 
-## Going to plot CIs for each condition
-
-as well as SEs, and visualizae how they're different
+### Ploting CIs by hand for each condition
+Also plot the SEs, and visualize how they're different
 
 ```{r}
 confidence_level=.95 # you can change this
@@ -361,7 +360,7 @@ tea_data_highn_summary_cis <- tea_data_highn %>%
 
 Between subjects experiment -- lots of variability! I like to visualize the raw datas as well as the mean and CIs
 
-```{R}
+```{r}
 ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
   geom_jitter(width=.1, height=0, alpha=.3) + # visualizes all the raw data, with no variation in y-axis jitter
   theme_few() +
@@ -371,7 +370,7 @@ ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
 
 ```
 
-```{R}
+```{r}
 ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
   geom_jitter(width=.1, height=0, alpha=.5) + # visualizes all the raw data, with no variation in y-axis jitter
   theme_few() +
@@ -381,14 +380,17 @@ ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
 
 ```
 
-To do: What does each dot represnet? What does the range represent in each graph? What does the confidence interval indicate? What does the SE indicate?
+To do: What does each dot represent? What does the range represent in each graph? What does the confidence interval indicate? What does the SE indicate?
 
 To do: how does this change when you use the low-n experiment?
 
-# Simulating p-values across multiple experiments
+To do: Find the shortcut ggplot function so you don't have to calculate these by hand ever again :) 
+
+## Simulating p-values across multiple experiments
 
 To do: Comment what the lines of code are doing First for low-n experiments
 
+### When there is no actual effect
 ```{r}
 all_results=tibble() 
 
@@ -420,8 +422,7 @@ Calculate the proportion of p-values that are less than .05 What was our false p
 hist(all_results$pvalue)
 ```
 
-## Now for an experiment when there is actually an effect
-
+### Now for an experiment when there is actually an effect
 ```{r}
 all_results_high_n=tibble() 
 
