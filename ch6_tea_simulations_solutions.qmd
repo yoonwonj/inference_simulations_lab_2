@@ -34,8 +34,6 @@ This makes "tea data", a tibble (dataframe) where there are a certain number of 
 
 The averages of the two conditions are separated by a known effect ("delta") with some variance ("sigma"). You can change these around since we're simulating data!
 
-So, here, DELTA is the difference is the tea ratings, on average, between the two conditions, in likert scale points.
-
 ```{r}
 make_tea_data <- function(n_total = 48,
                           sigma = 1.25,
@@ -61,18 +59,24 @@ make_tea_data <- function(n_total = 48,
 tea_data <- make_tea_data(n_total = 18, delta = .5)
 ```
 
-Now, make a new data frame (call it tea_data_highn) with an N of 48, or something higher if you want?
-
 ```{r}
-
+tea_data_highn <- make_tea_data(n_total = 48, delta = .5)
 ```
 
-To do: OK, look at these data frames. How long are they, what are the column names? Look at them in your console by copy and pasting the variable names into R.
+To do: OK, look at these data frames. How long are they, what are the column names? Look at them in your console and in the environment if you want.
 
 To do: Write basic tidyverse code to calculate the mean of each condition (hint: use `group_by` and `summarize`)
 
 ```{r}
+by_condition <- tea_data %>%
+  group_by(condition) %>%
+  summarize(mean_rating = mean(rating),
+            num_participants = length(rating))
 
+by_condition_highn <- tea_data_highn %>%
+  group_by(condition) %>%
+  summarize(mean_rating = mean(rating),
+            num_participants = length(rating))
  
 ```
 
@@ -96,25 +100,23 @@ To do: Run these code blocks
 
 ...where you have 18 participants per experiment with an average difference of 1.5 points in tea deliciousness on average
 
-Below is kind of annoying and complex tidyverse, so I'm doing it for you. I'd have to look this up how to do it.
-
 ```{r}
 samps <- tibble(sim = 1:1000) |> #
   mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta = 1.5))) |>  # simulate
   unnest(cols = data) # wrangle
 ```
 
-OK, copy this but now change it so that you 48 participants per experiment
+...where you have 48 participants per experiment
 
 ```{r}
-samps_highn <-...
+samps_highn <- tibble(sim = 1:1000) |> #
+  mutate(data = map(sim, \(i) make_tea_data(n_total = 48, delta = 1.5))) |>  # simulate
+  unnest(cols = data) # wrangle
 ```
 
 ### Summarize both of these simulations
 
-To do: Take these simulated experiments, group by `sim` and `condition`, and summarize the average ratings per experiment.
-
-Then, for each experiment, calculate the mean difference between the milk first vs. tea first conditions.
+To do: Run these code blocks Do you understand what each line is doing here? Sim = the simulated experiment number (arbitrary number from 1-1000)
 
 ```{r}
 tea_data_summary <- samps |>
@@ -136,10 +138,12 @@ tea_data_highn_summary <- samps_highn |>
 
 ## Plot difference for low-n
 
-Let's make a plot to plot the differences in ratings across conditions for the low-n condition
+Let's make a plot to plot the differences in ratings across conditions To do: run these code blocks
 
 ```{r}
-
+ggplot(data=tea_data_summary, aes(x=delta)) +
+  geom_histogram(alpha=.8, bins=20) 
+  
 ```
 
 Or simply
@@ -153,7 +157,7 @@ hist(tea_data_summary$delta)
 To do: What's different about this distribution vs the one we just plotted?
 
 ```{r}
-
+hist(tea_data_highn_summary$delta)
 ```
 
 **Bonus** What happens if you run it again? Try varying the variance / mean of the effect when you change the "delta" and "sigma" values?
@@ -162,12 +166,21 @@ What happens if you vary the random seed?
 
 # Now let's visualize what would happen under the null distribution in two ways
 
-Do the same thing as you did before - simulating 1000 experiments -- but NOW simulate no differences between conditions. Remember, it's the null model because DELTA (i.e., differences in conditions) is ZERO
+First, by simulating no differences between conditions. Remember, it's the null model because DELTA (i.e., differences in conditions) is ZERO
+
+To do: Where in the function is it specifying that there is no difference between conditions?
 
 ```{r}
-null_model 
+null_model <- tibble(sim = 1:1000) |>
+  mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta = 0))) |>
+  unnest(cols = data)
 
-null_model_summary
+null_model_summary <- null_model |>
+  group_by(sim, condition) |>
+  summarise(mean_rating = mean(rating)) |>
+  group_by(sim) |>
+  summarise(delta = mean_rating[condition == "milk first"] -
+              mean_rating[condition == "tea first"])
   
 ```
 
@@ -361,7 +374,7 @@ tea_data_highn_summary_cis <- tea_data_highn %>%
 
 Between subjects experiment -- lots of variability! I like to visualize the raw datas as well as the mean and CIs
 
-```{R}
+```{r}
 ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
   geom_jitter(width=.1, height=0, alpha=.3) + # visualizes all the raw data, with no variation in y-axis jitter
   theme_few() +
@@ -371,7 +384,7 @@ ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
 
 ```
 
-```{R}
+```{r}
 ggplot(data = tea_data_highn, aes(x=condition, y=rating, col=condition))  +
   geom_jitter(width=.1, height=0, alpha=.5) + # visualizes all the raw data, with no variation in y-axis jitter
   theme_few() +
