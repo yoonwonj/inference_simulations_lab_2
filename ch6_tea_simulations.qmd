@@ -408,7 +408,8 @@ To do: Find the shortcut ggplot function so you don't have to calculate these by
 
 # Part 4: Simulating p-values across multiple experiments
 
-To do: Comment what the lines of code are doing \### When there is no actual effect
+To do: Comment what the lines of code are doing 
+### When there is no actual effect
 
 ```{r}
 all_results=tibble() 
