@@ -530,11 +530,13 @@ ggplot(data = tea_data, aes(x=condition, y=rating, col=condition))  +
 
 To do: Find the shortcut ggplot function so you don't have to calculate these by hand ever again :)
 
+We can use geom_errorbar() function from ggplot2.
+
 # Part 4: Simulating p-values across multiple experiments
 
 To do: Comment what the lines of code are doing \### When there is no actual effect
 
-```{r}
+```{r} #| eval: false}
 all_results=tibble() 
 
 for (this_sim in 1:1000) {
@@ -560,14 +562,14 @@ What is the distribution of p-values when the null is true?
 
 Calculate the proportion of p-values that are less than .05 What was our false positive rate?
 
-```{r}
+```{r} #| eval: false}
 # you'll need all_results$pvalue
 hist(all_results$pvalue)
 ```
 
 ### Now for an experiment when there is actually an effect
 
-```{r}
+```{r} #| eval: false}
 all_results_high_n=tibble() 
 
 for (this_sim in 1:500) {
