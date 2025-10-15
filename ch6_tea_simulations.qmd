@@ -14,13 +14,15 @@ You should have this repository cloned on your computer.
 
 To understand what a function does, type `? [function_name]` where function_name refers to a function name in a loaded repository.
 
+**You can open this in RStudio -- there are so few packages it should work despite variations in environments**
+
 # Setup
 
 ```{r}
 set.seed(123) # good practice to set a random seed, or else different runs get you different results
 ```
 
-## Import the functions & data that we need
+## Import the libraries
 
 ```{r}
 library(tidyverse)
@@ -34,13 +36,13 @@ This makes "tea data", a tibble (dataframe) where there are a certain number of 
 
 The averages of the two conditions are separated by a known effect ("delta") with some variance ("sigma"). You can change these around since we're simulating data!
 
-So, here, DELTA is the difference is the tea ratings, on average, between the two conditions, in likert scale points.
+So, here, DELTA is the difference is the tea ratings, on average, between the two conditions, in likert scale points. For simplicity, the scale is from 1-10.
 
 ```{r}
 make_tea_data <- function(n_total = 48,
-                          sigma = 1.25,
-                          delta = 1.5) {
-  n_half <- n_total / 2
+                          sigma = 1.25, # sd of the distribution
+                          delta = 1.5) {  # difference between distributinos
+  n_half <- n_total / 2 # half of the total subjects  = #/n subs per condition
   tibble(condition = c(rep("milk first", n_half), rep("tea first", n_half)),
          rating = c(round(
            rnorm(n_half, mean = 3.5 + delta, sd = sigma)
@@ -48,7 +50,7 @@ make_tea_data <- function(n_total = 48,
          round(rnorm(
            n_half, mean = 3.5, sd = sigma
          )))) |>
-    mutate(rating = if_else(rating > 10, 10, rating),
+    mutate(rating = if_else(rating > 10, 10, rating), # random sampling could mean the scale gets out of range
            # truncate if greater than max/min of rating scale
            rating = if_else(rating < 1, 1, rating))
 }
@@ -61,15 +63,19 @@ make_tea_data <- function(n_total = 48,
 tea_data <- make_tea_data(n_total = 18, delta = .5)
 ```
 
-Now, make a new data frame (call it tea_data_highn) with an N of 48, or something higher if you want?
+Now, make a new data frame (call it tea_data_highn) with an N of 48, or something higher if you want. You need to call the custom function.
 
 ```{r}
 
 ```
 
-To do: OK, look at these data frames. How long are they, what are the column names? Look at them in your console by copy and pasting the variable names into R.
+To do: OK, look at these data  How long are they, what are the column names? Look at them in your console by copy and pasting the variable names into R.
 
-To do: Write basic tidyverse code to calculate the mean of each condition (hint: use `group_by` and `summarize`)
+Call `summary(tea_data)` and look at the outputs.
+Call `head(tea_data)` to look at the first few rows.
+
+
+To do: Write basic tidyverse code to calculate the mean of each condition (hint: use `group_by` and `summarize`). 
 
 ```{r}
 
@@ -78,9 +84,13 @@ To do: Write basic tidyverse code to calculate the mean of each condition (hint:
 
 ## In this first draw, was it significant with N=9 or N=24 per group?
 
-OK, we can do t-tests already! I've done these within a pipe (whoops, I often use the old pipe operator because I have small hands)
+OK, we can do t-tests already! I've done these within a pipe (whoops, I often use the old pipe `%>%` operator which is the same as `|>` , don't mind this difference.
 
-To do: Run these and look at the outputs by posting `out_low_n` in the console
+To do: Run these and look at the outputs by posting `out_low_n` in the console and ``out_low_h` in the console.
+
+R practice: Use the `$` operator and then press `tab` to see how you can get specific values (i.e., the `t` or `p` value) from the outputs.
+
+
 
 ```{r}
 out_low_n <- tea_data %>%
@@ -97,7 +107,7 @@ Now let's simulate 1000 experiments...where you have 18 participants per experim
 Below is kind of annoying and complex tidyverse, so I'm doing it for you. I'd have to look this up how to do it.
 
 ```{r}
-samps <- tibble(sim = 1:1000) |> #
+samps <- tibble(sim = 1:1000) |> 
   mutate(data = map(sim, \(i) make_tea_data(n_total = 18, delta = 1.5))) |>  # simulate
   unnest(cols = data) # wrangle
 ```
@@ -152,7 +162,7 @@ To do: What's different about this distribution vs the one we just plotted?
 
 ```
 
-**Bonus** What happens if you run it again? Try varying the variance / mean of the effect when you change the "delta" and "sigma" values in the data simulation.
+**Bonus** What happens if you run it again, but this time try changing the variance / mean of the effect when you change the "delta" and "sigma" values in the data simulation.
 
 What happens if you vary the random seed?
 
@@ -388,8 +398,7 @@ To do: Find the shortcut ggplot function so you don't have to calculate these by
 
 ## Simulating p-values across multiple experiments
 
-To do: Comment what the lines of code are doing First for low-n experiments
-
+To do: Comment what the lines of code are doing 
 ### When there is no actual effect
 ```{r}
 all_results=tibble() 
